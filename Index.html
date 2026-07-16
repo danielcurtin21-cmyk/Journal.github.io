@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morning Pages</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root { --cream:#f5f0e8;--warm:#e8ddd0;--bark:#8b6f5e;--stone:#4a4240;--fog:#a09490;--sage:#7a9e8e;--gold:#c4975a;--ink:#2d2320; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+  .page{display:none;min-height:100vh;animation:fadeIn 0.6s ease forwards;}
+  .page.active{display:flex;flex-direction:column;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  header{padding:2.5rem 2rem 1rem;display:flex;justify-content:space-between;align-items:flex-start;}
+  .date-day{font-family:'Cormorant Garamond',serif;font-size:3.2rem;font-weight:300;color:var(--bark);line-height:1;}
+  .date-full{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);margin-top:4px;}
+  .header-right{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);text-align:right;padding-top:.5rem;}
+  .divider{height:1px;background:linear-gradient(90deg,transparent,var(--bark) 30%,var(--bark) 70%,transparent);opacity:.2;margin:0 2rem;}
+  .body-pad{flex:1;padding:2rem 2rem calc(80px + 2rem);display:flex;flex-direction:column;gap:1.6rem;}
+  .section-label{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--fog);margin-bottom:.8rem;}
+  .mood-block{display:flex;flex-direction:column;}
+  .score-question{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;font-style:italic;color:var(--stone);line-height:1.4;margin-bottom:1.4rem;}
+  .score-display{display:flex;flex-direction:column;align-items:center;gap:.5rem;margin-bottom:1.2rem;}
+  .mood-words{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.2rem;}
+  .mood-word{padding:.55rem 1rem;border-radius:20px;border:1.5px solid var(--warm);background:white;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--stone);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+  .mood-word.selected{color:white;border-color:transparent;}
+  .mood-word.tier-1.selected{background:#c47a5a;}
+  .mood-word.tier-2.selected{background:#c4975a;}
+  .mood-word.tier-3.selected{background:#8b6f5e;}
+  .mood-word.tier-4.selected{background:#7a9e8e;}
+  .mood-word.tier-5.selected{background:#5a8e7e;}
+  .score-bucket{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fog);transition:color .3s;min-height:1em;}
+  .score-number{font-family:'Cormorant Garamond',serif;font-size:4rem;font-weight:300;line-height:1;transition:color .3s;color:var(--bark);}
+  .score-display{display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.8rem;background:white;border-radius:16px;border:1.5px solid var(--warm);}
+  .prompt-card{background:white;border-radius:16px;padding:1.6rem;border:1.5px solid var(--warm);animation:slideUp .5s ease forwards;opacity:0;}
+  .prompt-card:nth-child(1){animation-delay:.05s;}
+  .prompt-card:nth-child(2){animation-delay:.15s;}
+  .prompt-card:nth-child(3){animation-delay:.25s;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .prompt-tag{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin-bottom:.6rem;}
+  .prompt-text{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;font-style:italic;color:var(--stone);line-height:1.55;}
+  .prompt-note{font-size:.7rem;color:var(--fog);margin-top:.8rem;font-style:italic;}
+  .btn-primary{width:100%;padding:1rem;background:var(--bark);color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+  .btn-primary:hover{background:var(--stone);transform:translateY(-1px);}
+  .btn-ghost{width:100%;padding:.85rem;background:transparent;color:var(--fog);border:1.5px solid var(--warm);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+  .btn-ghost:hover{border-color:var(--bark);color:var(--bark);}
+  .complete-body{flex:1;padding:2rem 2rem calc(80px + 1rem);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;text-align:center;}
+  .complete-mark{width:60px;height:60px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;font-size:1.5rem;animation:popIn .4s cubic-bezier(.34,1.56,.64,1) forwards;}
+  @keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+  .complete-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--stone);}
+  .complete-sub{font-size:.82rem;color:var(--fog);line-height:1.7;max-width:270px;}
+  .summary-card{background:white;border-radius:16px;padding:1.2rem 1.5rem;border:1.5px solid var(--warm);width:100%;text-align:left;}
+  .summary-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.4rem;}
+  .summary-label{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fog);}
+  .summary-score-big{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:300;line-height:1;}
+  .summary-word{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1rem;color:var(--stone);}
+  .summary-prompts{margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--warm);display:flex;flex-direction:column;gap:.5rem;}
+  .summary-prompt-line{font-size:.75rem;color:var(--fog);font-style:italic;line-height:1.4;}
+  .streak-bar{display:flex;gap:6px;margin-top:.2rem;}
+  .streak-dot{width:9px;height:9px;border-radius:50%;background:var(--warm);}
+  .streak-dot.filled{background:var(--gold);}
+  .history-body{flex:1;padding:1.5rem 2rem calc(80px + 1rem);display:flex;flex-direction:column;gap:1rem;overflow-y:auto;}
+  .history-entry{background:white;border-radius:14px;padding:1.2rem 1.4rem;border:1.5px solid var(--warm);}
+  .history-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;}
+  .history-date{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);}
+  .history-score-chip{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;padding:2px 10px;border-radius:20px;background:var(--cream);}
+  .history-prompts{display:flex;flex-direction:column;gap:.3rem;}
+  .history-prompt{font-size:.78rem;color:var(--stone);font-style:italic;line-height:1.4;}
+  .empty-history{text-align:center;padding:3rem 1rem;color:var(--fog);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.1rem;line-height:1.6;}
+  .trend-wrap{background:white;border-radius:14px;padding:1.2rem;border:1.5px solid var(--warm);}
+  .trend-title{font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--fog);margin-bottom:1rem;}
+  .chart-area{position:relative;height:80px;width:100%;}
+  .chart-svg{width:100%;height:100%;}
+  nav{position:fixed;bottom:0;left:0;right:0;background:rgba(245,240,232,.94);backdrop-filter:blur(12px);border-top:1px solid var(--warm);display:flex;padding:.6rem 0 calc(.6rem + env(safe-area-inset-bottom));z-index:50;}
+  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:.4rem 0;-webkit-tap-highlight-color:transparent;}
+  .nav-icon{font-size:1.2rem;}
+  .nav-label{font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);transition:color .2s;}
+  .nav-btn.active .nav-label{color:var(--bark);}
+</style>
+</head>
+<body>
+
+<div id="page-today" class="page active">
+  <header>
+    <div><div class="date-day" id="today-day"></div><div class="date-full" id="today-full"></div></div>
+    <div class="header-right" id="streak-label"></div>
+  </header>
+  <div class="divider"></div>
+  <div class="body-pad">
+    <div class="mood-block">
+      <div class="section-label">Morning Mood</div>
+      <div class="score-question">Which words feel true right now?</div>
+      <div class="mood-words" id="mood-words"></div>
+      <div class="score-display" id="score-display" style="display:none">
+        <div class="score-number" id="score-num">5</div>
+        <div class="score-bucket" id="score-bucket">Finding Ground</div>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Three prompts today — write in your journal</div>
+      <div style="display:flex;flex-direction:column;gap:1rem" id="prompts-container"></div>
+    </div>
+    <button class="btn-primary" onclick="saveEntry()">Log This Morning</button>
+  </div>
+</div>
+
+<div id="page-complete" class="page">
+  <header>
+    <div><div class="date-day" id="complete-day"></div><div class="date-full" id="complete-full"></div></div>
+  </header>
+  <div class="divider"></div>
+  <div class="complete-body">
+    <div class="complete-mark">✦</div>
+    <div class="complete-title">You showed up.</div>
+    <div class="complete-sub">Pen to paper, honest with yourself. That is the whole practice.</div>
+    <div class="streak-bar" id="streak-dots"></div>
+    <div class="summary-card" id="summary-card"></div>
+    <button class="btn-ghost" onclick="exportData()">⬇️ Export My Journal History</button>
+  </div>
+</div>
+
+<div id="page-history" class="page">
+  <header>
+    <div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:300;color:var(--bark)">Past Mornings</div>
+      <div class="date-full" id="history-count"></div>
+    </div>
+  </header>
+  <div class="divider"></div>
+  <div class="history-body">
+    <div class="trend-wrap" id="trend-wrap" style="display:none">
+      <div class="trend-title">Mood trend</div>
+      <div class="chart-area"><svg class="chart-svg" id="trend-svg"></svg></div>
+    </div>
+    <div id="history-container"></div>
+    <button class="btn-ghost" onclick="exportData()" style="margin-top:.5rem">⬇️ Export My Journal History</button>
+  </div>
+</div>
+
+<nav>
+  <button class="nav-btn active" id="nav-today" onclick="navTo('today')">
+    <span class="nav-icon">☀️</span><span class="nav-label">Today</span>
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="navTo('history')">
+    <span class="nav-icon">📈</span><span class="nav-label">History</span>
+  </button>
+</nav>
+
+<script>
+const MOOD_WORDS=[
+  {word:"Struggling",   score:1,  tier:1},
+  {word:"Heavy",        score:2,  tier:1},
+  {word:"Numb",         score:2,  tier:1},
+  {word:"Sad",          score:2,  tier:1},
+  {word:"Defeated",     score:1,  tier:1},
+  {word:"Foggy",        score:3,  tier:2},
+  {word:"Anxious",      score:3,  tier:2},
+  {word:"Scattered",    score:3,  tier:2},
+  {word:"Uneasy",       score:4,  tier:2},
+  {word:"Tired",        score:4,  tier:2},
+  {word:"Searching",    score:5,  tier:2},
+  {word:"Okay",         score:5,  tier:2},
+  {word:"Neutral",      score:5,  tier:3},
+  {word:"Unsettled",    score:4,  tier:2},
+  {word:"Calm",         score:7,  tier:4},
+  {word:"Steady",       score:6,  tier:3},
+  {word:"Present",      score:7,  tier:4},
+  {word:"Grounded",     score:7,  tier:4},
+  {word:"Clearheaded",  score:8,  tier:4},
+  {word:"Focused",      score:8,  tier:4},
+  {word:"Sharp",        score:8,  tier:4},
+  {word:"Hopeful",      score:8,  tier:4},
+  {word:"Grateful",     score:9,  tier:5},
+  {word:"Energized",    score:9,  tier:5},
+  {word:"Connected",    score:9,  tier:5},
+  {word:"Joyful",       score:10, tier:5},
+  {word:"Alive",        score:10, tier:5},
+  {word:"Thriving",     score:10, tier:5},
+];
+
+const BUCKETS=[
+  {min:1,  max:3,  label:"In the Depths",    color:"#c47a5a"},
+  {min:4,  max:5,  label:"Finding Ground",   color:"#c4975a"},
+  {min:6,  max:7,  label:"Holding Steady",   color:"#8b6f5e"},
+  {min:8,  max:9,  label:"Rising",           color:"#7a9e8e"},
+  {min:10, max:10, label:"Thriving",         color:"#5a8e7e"},
+];
+
+let selectedWords=new Set();
+
+function getBucket(score){return BUCKETS.find(b=>score>=b.min&&score<=b.max)||BUCKETS[0];}
+
+function renderMoodWords(){
+  document.getElementById('mood-words').innerHTML=MOOD_WORDS.map(m=>
+    `<button class="mood-word tier-${m.tier}" data-word="${m.word}" onclick="toggleWord('${m.word}')">${m.word}</button>`
+  ).join('');
+}
+
+function toggleWord(word){
+  const btn=document.querySelector(`[data-word="${word}"]`);
+  if(selectedWords.has(word)){selectedWords.delete(word);btn.classList.remove('selected');}
+  else{selectedWords.add(word);btn.classList.add('selected');}
+  updateMoodScore();
+}
+
+function updateMoodScore(){
+  const disp=document.getElementById('score-display');
+  if(selectedWords.size===0){disp.style.display='none';return;}
+  const words=MOOD_WORDS.filter(m=>selectedWords.has(m.word));
+  const avg=Math.round(words.reduce((s,m)=>s+m.score,0)/words.length);
+  const bucket=getBucket(avg);
+  document.getElementById('score-num').textContent=avg;
+  document.getElementById('score-num').style.color=bucket.color;
+  document.getElementById('score-bucket').textContent=bucket.label;
+  document.getElementById('score-bucket').style.color=bucket.color;
+  disp.style.display='flex';
+}
+
+
+
+const POOL_GROUNDING=[{"text":"What am I grateful for that I rarely stop to acknowledge?","mode":"Gratitude","cls":"grounding"},{"text":"What is one thing I have been given that I forget to be grateful for?","mode":"Gratitude","cls":"grounding"},{"text":"What is something beautiful I saw recently that stopped me for a second?","mode":"Gratitude","cls":"grounding"},{"text":"What ordinary comfort would I miss most if it were gone?","mode":"Gratitude","cls":"grounding"},{"text":"Who made my life easier recently without being asked?","mode":"Gratitude","cls":"grounding"},{"text":"What is working in my life right now that I tend to take for granted?","mode":"Gratitude","cls":"grounding"},{"text":"What is a small pleasure available to me today if I simply notice it?","mode":"Gratitude","cls":"grounding"},{"text":"What part of my body or health am I quietly grateful for?","mode":"Gratitude","cls":"grounding"},{"text":"What is something about my home that I love?","mode":"Gratitude","cls":"grounding"},{"text":"What is a sound, sight, or smell today that I could truly savor?","mode":"Gratitude","cls":"grounding"},{"text":"Who in my life am I lucky to have, and have I told them lately?","mode":"Gratitude","cls":"grounding"},{"text":"What is something I complained about recently that is actually a privilege?","mode":"Gratitude","cls":"grounding"},{"text":"What is one thing about today, even a hard one, that I can find value in?","mode":"Gratitude","cls":"grounding"},{"text":"What is a piece of music, art, or writing that feels like a gift to me?","mode":"Gratitude","cls":"grounding"},{"text":"What am I most thankful for in this exact season of my life?","mode":"Gratitude","cls":"grounding"},{"text":"What did today already give me before I even started?","mode":"Gratitude","cls":"grounding"},{"text":"What is a freedom I have that I rarely think about?","mode":"Gratitude","cls":"grounding"},{"text":"What is something I own that makes daily life better?","mode":"Gratitude","cls":"grounding"},{"text":"What is a relationship that feels like a gift, and do I treat it that way?","mode":"Gratitude","cls":"grounding"},{"text":"What beauty is within arm's reach of me right now?","mode":"Gratitude","cls":"grounding"},{"text":"What is something my past self worked hard for that I now enjoy without thinking?","mode":"Gratitude","cls":"grounding"},{"text":"How am I breathing right now, and what does my body feel like without judgment?","mode":"Present","cls":"grounding"},{"text":"What physical sensation this morning feels good, even subtly?","mode":"Present","cls":"grounding"},{"text":"Where am I holding tension right now?","mode":"Present","cls":"grounding"},{"text":"What can I see, hear, and feel in this exact moment?","mode":"Present","cls":"grounding"},{"text":"What is a sensation I love that costs nothing, like sun or warm sheets?","mode":"Present","cls":"grounding"},{"text":"What does my body need today that my mind keeps ignoring?","mode":"Present","cls":"grounding"},{"text":"What would my ideal first hour of the day feel like physically?","mode":"Present","cls":"grounding"},{"text":"What is one small physical act that reliably makes me feel better?","mode":"Present","cls":"grounding"},{"text":"What does being truly comfortable feel like, and when did I last allow it?","mode":"Present","cls":"grounding"},{"text":"What does my body crave when I finally slow down?","mode":"Present","cls":"grounding"},{"text":"What is a movement or stretch that feels like a sigh of relief?","mode":"Present","cls":"grounding"},{"text":"What am I looking forward to physically today, however small?","mode":"Present","cls":"grounding"},{"text":"What would ground me right now if I paused to do it?","mode":"Present","cls":"grounding"},{"text":"What is my body trying to tell me that I keep overriding?","mode":"Present","cls":"grounding"},{"text":"What sound could I seek out today that would soothe me?","mode":"Present","cls":"grounding"},{"text":"What would it feel like to move through today slowly and on purpose?","mode":"Present","cls":"grounding"},{"text":"What taste am I craving, and could I have it today?","mode":"Present","cls":"grounding"},{"text":"What is one place in nature my body misses right now?","mode":"Present","cls":"grounding"},{"text":"What does my breath feel like when I actually pay attention to it?","mode":"Present","cls":"grounding"},{"text":"When did I last feel the sun, wind, or water and really notice it?","mode":"Present","cls":"grounding"},{"text":"What physical place makes me feel instantly at home?","mode":"Present","cls":"grounding"},{"text":"What does my energy feel like right now, and what is affecting it?","mode":"Present","cls":"grounding"},{"text":"What is one act of physical care I could give myself before noon?","mode":"Present","cls":"grounding"},{"text":"Where have I felt a sense of awe recently, and what created it?","mode":"Wonder","cls":"grounding"},{"text":"What would today look like if I approached it with wonder instead of worry?","mode":"Wonder","cls":"grounding"},{"text":"What is something ordinary I could treat as sacred today?","mode":"Wonder","cls":"grounding"},{"text":"When did I last feel genuinely amazed by something?","mode":"Wonder","cls":"grounding"},{"text":"What in the natural world calls to me right now?","mode":"Wonder","cls":"grounding"},{"text":"What is a question about life or the universe that genuinely fascinates me?","mode":"Wonder","cls":"grounding"},{"text":"What is something larger than myself that I feel connected to?","mode":"Wonder","cls":"grounding"},{"text":"What small miracle am I walking past without noticing?","mode":"Wonder","cls":"grounding"},{"text":"What does my soul actually long for beneath the daily noise?","mode":"Wonder","cls":"grounding"},{"text":"What would it feel like to be fully present for even one hour today?","mode":"Wonder","cls":"grounding"},{"text":"What is beautiful about being alive right now?","mode":"Wonder","cls":"grounding"},{"text":"When did I last feel pure, uncomplicated joy?","mode":"Wonder","cls":"grounding"},{"text":"What is something I find mysterious in the best way?","mode":"Wonder","cls":"grounding"},{"text":"What would I notice today if I moved through it like a curious visitor?","mode":"Wonder","cls":"grounding"},{"text":"What is sacred to me, however I define that word?","mode":"Wonder","cls":"grounding"},{"text":"What in my life right now is quietly, secretly magical?","mode":"Wonder","cls":"grounding"},{"text":"What does stillness offer me when I stop resisting it?","mode":"Wonder","cls":"grounding"},{"text":"What would slowing down let me finally see?","mode":"Wonder","cls":"grounding"},{"text":"What is worth pausing for today that I would normally rush past?","mode":"Wonder","cls":"grounding"},{"text":"What fills me with hope when I let it?","mode":"Wonder","cls":"grounding"}];
+const POOL_OUTWARD=[{"text":"What is a small win from yesterday that I forgot to notice?","mode":"Memory","cls":"outward"},{"text":"Who taught me something important without meaning to, and what was it?","mode":"Memory","cls":"outward"},{"text":"What is a memory that always makes me smile, and what does it say about what I value?","mode":"Memory","cls":"outward"},{"text":"What is the last thing that made me laugh until it hurt?","mode":"Memory","cls":"outward"},{"text":"What is a moment I felt completely at peace, and what made it possible?","mode":"Memory","cls":"outward"},{"text":"What is the most peaceful place I have ever woken up?","mode":"Memory","cls":"outward"},{"text":"What is a smell that instantly takes me back somewhere, and where does it take me?","mode":"Memory","cls":"outward"},{"text":"What is the best meal I have had recently, and what made it memorable?","mode":"Memory","cls":"outward"},{"text":"What is the kindest thing anyone has ever said to me?","mode":"Memory","cls":"outward"},{"text":"What is the most generous thing someone ever did for me, and how did it change me?","mode":"Memory","cls":"outward"},{"text":"What is a memory with someone I love that I would relive for a moment if I could?","mode":"Memory","cls":"outward"},{"text":"What is a place I have been that felt genuinely magical?","mode":"Memory","cls":"outward"},{"text":"What experience has stayed with me because of how it made me feel?","mode":"Memory","cls":"outward"},{"text":"What is a moment of unexpected kindness I witnessed or received?","mode":"Memory","cls":"outward"},{"text":"What did I need to hear ten years ago, and have I said it to myself yet?","mode":"Memory","cls":"outward"},{"text":"What is something I used to want badly that I no longer want, and what changed?","mode":"Memory","cls":"outward"},{"text":"What would younger me be amazed that I can do now?","mode":"Memory","cls":"outward"},{"text":"What is a moment this year I want to be sure I never forget?","mode":"Memory","cls":"outward"},{"text":"What is a friendship from my past I am grateful for, even if it has faded?","mode":"Memory","cls":"outward"},{"text":"What is a moment of connection I shared recently that I am grateful for?","mode":"Memory","cls":"outward"},{"text":"What is a piece of feedback that changed me for the better?","mode":"Memory","cls":"outward"},{"text":"What is a book, idea, or person that changed how I see the world?","mode":"Memory","cls":"outward"},{"text":"What is a tradition from my childhood that still shapes me?","mode":"Memory","cls":"outward"},{"text":"What is the most alive I have ever felt?","mode":"Memory","cls":"outward"},{"text":"When did someone believe in me before I believed in myself?","mode":"Memory","cls":"outward"},{"text":"What would I attempt this year if I knew it was impossible to embarrass myself?","mode":"Possibility","cls":"outward"},{"text":"What is a small risk I could take this week that excites me a little?","mode":"Possibility","cls":"outward"},{"text":"If I had a totally free day with no obligations, what would I actually want to do?","mode":"Possibility","cls":"outward"},{"text":"What is a skill or subject I would love to learn just for the joy of it?","mode":"Possibility","cls":"outward"},{"text":"What is a dream I have quietly shelved that still tugs at me?","mode":"Possibility","cls":"outward"},{"text":"What would I do with my time if I fully believed I had enough money?","mode":"Possibility","cls":"outward"},{"text":"What adventure, big or small, is calling to me?","mode":"Possibility","cls":"outward"},{"text":"What is a wild idea I have had that I dismissed too quickly?","mode":"Possibility","cls":"outward"},{"text":"What would I create if I knew no one would ever judge it?","mode":"Possibility","cls":"outward"},{"text":"What problem would I love to spend a year solving if resources were no object?","mode":"Possibility","cls":"outward"},{"text":"What is one thing I could start today that my future self would thank me for?","mode":"Possibility","cls":"outward"},{"text":"Where do I want to be a year from now, and what is one step toward it?","mode":"Possibility","cls":"outward"},{"text":"What would I do if I trusted my own momentum completely?","mode":"Possibility","cls":"outward"},{"text":"What is a version of my life I am curious about but have never let myself imagine?","mode":"Possibility","cls":"outward"},{"text":"If I could master one thing instantly, what would it be and why that one?","mode":"Possibility","cls":"outward"},{"text":"What is a place in the world I dream of standing in someday?","mode":"Possibility","cls":"outward"},{"text":"What is a fresh chapter I am standing at the edge of, and am I ready to step in?","mode":"Possibility","cls":"outward"},{"text":"What would I like to be able to say I did by the end of this year?","mode":"Possibility","cls":"outward"},{"text":"What is calling me forward that I keep talking myself out of?","mode":"Possibility","cls":"outward"},{"text":"What experiment could I run in my own life this month?","mode":"Possibility","cls":"outward"},{"text":"If fear were not a factor, what would I do this week?","mode":"Possibility","cls":"outward"},{"text":"What do I want more of in my life, and what is one way to invite it in?","mode":"Possibility","cls":"outward"},{"text":"Who deserves more of my attention right now, and what is stopping me?","mode":"People","cls":"outward"},{"text":"Who would I call if something wonderful happened, and have I told them what they mean to me?","mode":"People","cls":"outward"},{"text":"Is there a conversation I have been avoiding, and why?","mode":"People","cls":"outward"},{"text":"Who could use my encouragement today, and what would I say?","mode":"People","cls":"outward"},{"text":"Who has loved me well, and how can I honor that today?","mode":"People","cls":"outward"},{"text":"Who makes me feel most like myself, and why?","mode":"People","cls":"outward"},{"text":"What is one small way I could deepen a connection today?","mode":"People","cls":"outward"},{"text":"Who do I think about often but rarely reach out to?","mode":"People","cls":"outward"},{"text":"What do I want the people I love to feel when they are around me?","mode":"People","cls":"outward"},{"text":"Who shaped my idea of love, and what did they teach me?","mode":"People","cls":"outward"},{"text":"What is one thing I want to say to someone I love before I run out of time?","mode":"People","cls":"outward"},{"text":"Who is someone I admire, and what quality of theirs do I want more of?","mode":"People","cls":"outward"},{"text":"What would I want said about me by the people who know me best?","mode":"People","cls":"outward"},{"text":"Where in a relationship do giving and receiving feel out of balance?","mode":"People","cls":"outward"},{"text":"What is a way I could surprise someone I love this week?","mode":"People","cls":"outward"},{"text":"Who am I holding a grudge against, and what is it costing me?","mode":"People","cls":"outward"},{"text":"What does showing up for the people I love look like today, honestly?","mode":"People","cls":"outward"},{"text":"Who believed in me when I needed it, and have I thanked them?","mode":"People","cls":"outward"},{"text":"What is one relationship I want to invest in more this season?","mode":"People","cls":"outward"},{"text":"How do I want to be remembered by my family?","mode":"People","cls":"outward"},{"text":"Who brings out the best in me, and how can I spend more time in that energy?","mode":"People","cls":"outward"},{"text":"What is something loving I could do today that no one would ever know about?","mode":"People","cls":"outward"},{"text":"If my current mood were a weather pattern, what would the forecast say?","mode":"Play","cls":"outward"},{"text":"If my inner critic had a name and a bad haircut, what would I call it?","mode":"Play","cls":"outward"},{"text":"If I could delete one recurring thought like a spam email, which goes first?","mode":"Play","cls":"outward"},{"text":"What would my autobiography chapter title be for this exact season?","mode":"Play","cls":"outward"},{"text":"If today had a headline written by my most honest self, what would it say?","mode":"Play","cls":"outward"},{"text":"If my thoughts this morning were a playlist, what genre would it be?","mode":"Play","cls":"outward"},{"text":"If my brain had a desktop right now, what tabs are open and which should I close?","mode":"Play","cls":"outward"},{"text":"If joy sent me a text message this morning, what would it say?","mode":"Play","cls":"outward"},{"text":"If my purpose had a bumper sticker, what would it say?","mode":"Play","cls":"outward"},{"text":"If my life were a garden right now, what is blooming, what needs water, what needs pulling?","mode":"Play","cls":"outward"},{"text":"If my body had a theme song for today, what would it be and why?","mode":"Play","cls":"outward"},{"text":"What is one thing my ten year old self would find hilarious about my current worries?","mode":"Play","cls":"outward"},{"text":"If I could send a postcard to my future self one year from now, what would it say?","mode":"Play","cls":"outward"},{"text":"What song lyric or movie line feels oddly accurate about my life right now?","mode":"Play","cls":"outward"},{"text":"If my week were a movie, what genre is it and who is the main character becoming?","mode":"Play","cls":"outward"},{"text":"If I could have dinner with any version of myself, which one and what would I ask?","mode":"Play","cls":"outward"},{"text":"If my energy today were an animal, what would it be?","mode":"Play","cls":"outward"},{"text":"What would a theme park built around my life values look like?","mode":"Play","cls":"outward"},{"text":"If I had to describe my current chapter in three objects, what would they be?","mode":"Play","cls":"outward"},{"text":"If my morning had a color today, what would it be and why?","mode":"Play","cls":"outward"},{"text":"What would my younger self think if they saw me today, good and funny both?","mode":"Play","cls":"outward"},{"text":"If I could give my current problem to a fictional character to solve, who and why?","mode":"Play","cls":"outward"},{"text":"What would the title of this month of my life be?","mode":"Play","cls":"outward"}];
+const POOL_DEEP=[{"text":"What thought keeps circling that I haven't examined yet?","mode":"Reflection","cls":"deep"},{"text":"What story am I telling myself that may be old, not true?","mode":"Reflection","cls":"deep"},{"text":"What am I pretending not to know?","mode":"Reflection","cls":"deep"},{"text":"What fear is disguised as a reason right now?","mode":"Reflection","cls":"deep"},{"text":"What old version of myself am I still making decisions for?","mode":"Reflection","cls":"deep"},{"text":"What would I stop arguing about if I let myself be wrong?","mode":"Reflection","cls":"deep"},{"text":"What am I intellectualizing instead of feeling?","mode":"Reflection","cls":"deep"},{"text":"Where do I confuse being busy with making progress?","mode":"Reflection","cls":"deep"},{"text":"What is one thing I know I need to do that I keep thinking about instead of doing?","mode":"Reflection","cls":"deep"},{"text":"What is the gap between who I am and who I want to be, and is it shrinking?","mode":"Reflection","cls":"deep"},{"text":"What am I comparing myself to that is not a fair comparison?","mode":"Reflection","cls":"deep"},{"text":"What is the bravest thought I could hold about myself today?","mode":"Reflection","cls":"deep"},{"text":"What would my life look like if I believed the good things people say about me?","mode":"Reflection","cls":"deep"},{"text":"What is a rule I live by that I have never said out loud?","mode":"Reflection","cls":"deep"},{"text":"What is something I changed my mind about in the last year?","mode":"Reflection","cls":"deep"},{"text":"What is a decision I am proud of that no one else knows about?","mode":"Reflection","cls":"deep"},{"text":"What am I tolerating right now that I swore I never would?","mode":"Reflection","cls":"deep"},{"text":"What is the most honest thing I could say about where I am right now?","mode":"Reflection","cls":"deep"},{"text":"What would I do today if I stopped waiting to feel ready?","mode":"Reflection","cls":"deep"},{"text":"What am I most afraid to admit to myself, and what would happen if I did?","mode":"Reflection","cls":"deep"},{"text":"What is one belief I hold that I have never actually questioned?","mode":"Reflection","cls":"deep"},{"text":"What does self-respect look like for me today?","mode":"Reflection","cls":"deep"},{"text":"What would I do if I fully accepted that I am enough as I am?","mode":"Reflection","cls":"deep"},{"text":"What is a question I am afraid to answer honestly?","mode":"Reflection","cls":"deep"},{"text":"What am I hoping someone else will figure out for me?","mode":"Reflection","cls":"deep"},{"text":"What does accountability without self-punishment look like for me?","mode":"Reflection","cls":"deep"},{"text":"Where am I performing strength instead of actually having it?","mode":"Reflection","cls":"deep"},{"text":"What is one way I make things harder for myself than they need to be?","mode":"Reflection","cls":"deep"},{"text":"What have I outgrown but not yet let go of?","mode":"Reflection","cls":"deep"},{"text":"What is the kindest thing I could do for my future self today?","mode":"Reflection","cls":"deep"},{"text":"What does a good life look like to me today, not five years from now?","mode":"Meaning","cls":"deep"},{"text":"What is one thing I want to be remembered for that has nothing to do with success?","mode":"Meaning","cls":"deep"},{"text":"What do I stand for that I rarely say out loud?","mode":"Meaning","cls":"deep"},{"text":"What is the difference between what I say I value and how I spend my time?","mode":"Meaning","cls":"deep"},{"text":"What does living with integrity look like for me today?","mode":"Meaning","cls":"deep"},{"text":"What would I do today if I believed small acts of love actually change things?","mode":"Meaning","cls":"deep"},{"text":"What is one value I have not been living up to, and what would change that?","mode":"Meaning","cls":"deep"},{"text":"What does enough look like for me, and am I close?","mode":"Meaning","cls":"deep"},{"text":"What am I willing to be changed by?","mode":"Meaning","cls":"deep"},{"text":"What does it mean to be a good ancestor to those who come after me?","mode":"Meaning","cls":"deep"},{"text":"What legacy do I want to leave in the people closest to me?","mode":"Meaning","cls":"deep"},{"text":"What is something I believe I cannot prove but feel in my bones?","mode":"Meaning","cls":"deep"},{"text":"What would it mean to measure my worth by something other than what I produce?","mode":"Meaning","cls":"deep"},{"text":"What is one question I want my life to answer?","mode":"Meaning","cls":"deep"},{"text":"What do I want to be true of me at the end of this year?","mode":"Meaning","cls":"deep"},{"text":"Where am I spending energy on things that do not actually matter to me?","mode":"Meaning","cls":"deep"},{"text":"What does success actually mean to me, in my own definition?","mode":"Meaning","cls":"deep"},{"text":"What is a principle I would not compromise even under pressure?","mode":"Meaning","cls":"deep"},{"text":"What kind of person do I want to be in hard moments?","mode":"Meaning","cls":"deep"},{"text":"What matters more to me than being right?","mode":"Meaning","cls":"deep"},{"text":"What would I regret not doing if my life were shorter than I expect?","mode":"Meaning","cls":"deep"},{"text":"What am I avoiding, and what is it costing me?","mode":"Growth Edge","cls":"deep"},{"text":"Where am I playing it safe when I should take a risk?","mode":"Growth Edge","cls":"deep"},{"text":"What is a hard truth I need to tell myself gently today?","mode":"Growth Edge","cls":"deep"},{"text":"What habit is quietly shaping my life in a direction I did not choose?","mode":"Growth Edge","cls":"deep"},{"text":"Where have I been settling, and for what?","mode":"Growth Edge","cls":"deep"},{"text":"What is one thing I could do today that scares me a little in a good way?","mode":"Growth Edge","cls":"deep"},{"text":"What feedback have I been dismissing that might be true?","mode":"Growth Edge","cls":"deep"},{"text":"What is a pattern I keep repeating, and what would breaking it require?","mode":"Growth Edge","cls":"deep"},{"text":"Where am I giving my power away?","mode":"Growth Edge","cls":"deep"},{"text":"What would I do differently if I stopped needing everyone's approval?","mode":"Growth Edge","cls":"deep"},{"text":"What is one uncomfortable conversation that would move my life forward?","mode":"Growth Edge","cls":"deep"},{"text":"What am I blaming on circumstances that is actually within my control?","mode":"Growth Edge","cls":"deep"},{"text":"What is a boundary I need to set or strengthen?","mode":"Growth Edge","cls":"deep"},{"text":"Where am I waiting for permission I do not actually need?","mode":"Growth Edge","cls":"deep"},{"text":"What is the harder right thing I have been avoiding for the easier wrong one?","mode":"Growth Edge","cls":"deep"},{"text":"What growth is asking something of me that I keep postponing?","mode":"Growth Edge","cls":"deep"},{"text":"What excuse have I been leaning on for too long?","mode":"Growth Edge","cls":"deep"},{"text":"What would the strongest version of me do about my current situation?","mode":"Growth Edge","cls":"deep"},{"text":"Where do I need to forgive myself so I can move forward?","mode":"Growth Edge","cls":"deep"},{"text":"What is one small brave act I could take today?","mode":"Growth Edge","cls":"deep"},{"text":"What am I capable of that I keep underestimating?","mode":"Growth Edge","cls":"deep"}];
+
+let entries=JSON.parse(localStorage.getItem('mp_entries')||'[]');
+
+function todayKey(){return new Date().toISOString().slice(0,10);}
+function formatDate(s){const d=new Date(s+'T12:00:00');return{day:d.getDate(),full:d.toLocaleDateString('en-US',{weekday:'long',month:'long',year:'numeric'})};}
+const SABBATS=[{"name":"Samhain","m":10,"d":31,"prompts":["Samhain marks the year's ending and the thinning of the veil between worlds. What in my life is ready to die so that something new can live?","Who among my ancestors or departed do I want to honor today, and what did they pass down to me that I still carry?","What grief have I not fully let myself feel, and can I make room for it now without rushing to fix it?","What chapter of my life is quietly closing, and how do I want to honor its ending rather than ignore it?","What would I release if I truly trusted that endings make room for beginnings?","If I could speak to someone I have lost, what would I tell them, and what might they tell me?","What part of my old self am I ready to lay to rest with gratitude?","What fear about death, change, or the unknown is asking to be looked at honestly?","What wisdom have the hard losses of my life left me with?","What do I want to compost from this past year so it can feed what comes next?","Who or what am I ready to forgive before the year turns?","What ancestral pattern do I want to honor, and what one do I want to end with me?","In the dark half of the year, what truly deserves my energy and what does not?","What unfinished goodbye is still sitting in my heart?"]},{"name":"Yule","m":12,"d":21,"prompts":["Yule is the longest night, when the light begins its slow return. What small hope am I tending through this dark season?","What seed of intention do I want to plant in the stillness now, to grow as the light returns?","What does rest and retreat make possible that constant motion never could?","Where in my life am I waiting for light, and how can I be gentle with myself in the waiting?","What would I do differently if I deeply trusted that the light always returns?","What does this past year of darkness and light have to teach me as it ends?","In the quietest night of the year, what does my soul actually long for?","What am I ready to surrender to the dark so I can carry less into the new light?","What does hope feel like when there is no evidence for it yet, only faith?","What inner fire do I want to keep burning through the cold months?","Who has been a light for me this year, and have I told them?","What would I like the returning sun to find me doing differently?","What stillness am I afraid of, and what might it offer me if I stopped resisting?","What is one promise I want to make to myself in the dark, to keep as the light grows?"]},{"name":"Imbolc","m":2,"d":1,"prompts":["Imbolc is the first stirring of life beneath the frost. What spark in me is just beginning to wake?","What needs cleansing or clearing to make room for what is coming?","What early, fragile hope do I want to protect and feed right now?","What am I being called to begin, even before the conditions feel ready?","What in me is quietly preparing to bloom, even if no one can see it yet?","What new idea or desire is whispering to me that I keep dismissing as too soon?","What would I tend more carefully if I believed it would grow into something beautiful?","What does my intuition keep nudging me toward as the year stirs awake?","What small daily practice could I light like a candle and keep burning?","What part of my life feels frozen, and what would the first thaw look like?","What am I ready to purify or simplify so my energy can flow more freely?","What dream survived the winter and is asking for my attention now?","If I planted one intention today, what would I most want to harvest later this year?"]},{"name":"Ostara","m":3,"d":20,"prompts":["Ostara is the spring equinox, when light and dark stand in perfect balance. Where do I most need balance in my life right now?","What new growth am I ready to nurture as the world wakes up around me?","What fresh start is calling to me this season, and what is holding me back from it?","What would I plant now if I truly believed it would flourish?","Where am I ready to step out of winter and into new energy?","What part of my life is blossoming, and how can I encourage it?","What old habit am I ready to shed like a winter coat I no longer need?","What feels newly possible now that did not a few months ago?","Where in my life do giving and receiving feel out of balance, and how can I restore it?","What seeds did I plant earlier that are now beginning to sprout?","What does renewal look like for me this year, in a concrete way?","What would I do this spring if I trusted my own momentum?","What fresh chapter am I standing at the edge of, and am I ready to step in?"]},{"name":"Beltane","m":5,"d":1,"prompts":["Beltane is the fire of full bloom and vitality. What makes me feel most alive, and am I making real room for it?","What passion or desire have I been dampening that wants to be expressed?","Where do I feel most creative and full of life right now?","What would I pursue if I let myself burn a little brighter and care less what others think?","What relationship, pleasure, or joy do I want to celebrate and feed today?","What am I deeply attracted to in my life right now, and what is it telling me?","Where have I been playing it safe when my spirit wants to take a leap?","What would it feel like to say a full-bodied yes to something this season?","What does my body and heart crave more of: connection, play, beauty, touch, adventure?","What creative fire have I let go cold that I want to rekindle?","Who lights me up, and how can I spend more time in that energy?","What would I do this season if I lived from desire instead of obligation?","What is blooming in me that is ready to be shared with the world?","Where can I bring more sensuality, delight, and aliveness into an ordinary day?"]},{"name":"Litha","m":6,"d":21,"prompts":["Litha is the summer solstice, the peak of light and strength. Where am I at my fullest right now?","What abundance in my life have I not yet fully paused to celebrate?","What strength have I grown into that I can stand fully in today?","At this high point of the year, what do I want to soak in before the light begins to wane?","What is flourishing in my life, and how can I be truly present to it?","What have I accomplished this year that I have not given myself credit for?","Where is my energy strongest right now, and how do I want to use it?","What does being at my peak feel like, and how can I honor it without clinging?","What light do I carry that I could share more generously with others?","What joy is fully available to me today if I simply stop and receive it?","What would I do with this long, bright day if I let it be exactly enough?","What am I most grateful for at the height of this year?","What does my fullest, most radiant self look like, and is she or he here today?","What seeds I planted in spring are now in full leaf, and how does that feel to witness?"]},{"name":"Lughnasadh","m":8,"d":1,"prompts":["Lughnasadh is the first harvest. What am I reaping now that I planted months ago?","What effort of mine is finally bearing fruit, and have I thanked myself for the work?","What am I grateful to harvest in my life right now, however small?","What did I work hard for that I can pause to honor today?","What skill or seed am I proud to see maturing?","What sacrifice or effort earlier this year is paying off now?","What is ripe in my life and ready to be gathered before it passes?","What have I learned the hard way this year that has become real wisdom?","What would I like to share from my harvest with the people around me?","What am I still waiting to ripen, and can I be patient with it?","What does enough look like for me right now, and have I noticed I have it?","What part of this year's harvest surprised me?","What do I want to be sure to celebrate before the season turns toward autumn?"]},{"name":"Mabon","m":9,"d":21,"prompts":["Mabon is the autumn equinox, a moment of balance and gratitude. What am I most thankful for as this season turns?","What do I need to let go of as the days grow shorter and the light softens?","Where in my life am I seeking more balance between giving and receiving?","What harvest of this year am I proud of, and what am I ready to release?","As the light begins to fade, what do I want to carry inward with me?","What has this year given me that I did not expect?","What am I ready to set down so I can move into the darker season unburdened?","Where have I been out of balance, and what would equilibrium feel like?","What relationships or efforts deserve my gratitude before the year winds down?","What lessons from this year do I want to preserve like stored grain for winter?","What does a graceful letting go look like for me right now?","What am I proud of having grown or built this year?","As day and night balance, what in my own life is asking to be evened out?","What would I like to give thanks for that I usually overlook?"]}];
+
+function getActiveSabbat(){
+  const now=new Date();
+  const y=now.getFullYear();
+  for(const sb of SABBATS){
+    for(const yr of [y-1,y,y+1]){
+      const center=new Date(yr,sb.m-1,sb.d);
+      const diff=Math.round((new Date(now.getFullYear(),now.getMonth(),now.getDate())-center)/86400000);
+      if(diff>=-1&&diff<=1){
+        const dayMs=86400000;
+        const dayNum=Math.floor(new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime()/dayMs);
+        const idx=((dayNum%sb.prompts.length)+sb.prompts.length)%sb.prompts.length;
+        return {name:sb.name,text:sb.prompts[idx]};
+      }
+    }
+  }
+  return null;
+}
+function seededOrder(len,seed){
+  // Build a shuffled index order deterministically from a seed using a simple LCG
+  const arr=Array.from({length:len},(_,i)=>i);
+  let s=seed;
+  for(let i=len-1;i>0;i--){
+    s=(s*1103515245+12345)&0x7fffffff;
+    const j=s%(i+1);
+    const t=arr[i];arr[i]=arr[j];arr[j]=t;
+  }
+  return arr;
+}
+function pickClass(pool,day,salt){
+  const len=pool.length;
+  const cycle=Math.floor(day/len);
+  const pos=((day%len)+len)%len;
+  const order=seededOrder(len,cycle*97+salt);
+  // Reorder so that consecutive positions favor different modes
+  const shuffled=order.map(i=>pool[i]);
+  const byMode={};
+  shuffled.forEach(p=>{(byMode[p.mode]=byMode[p.mode]||[]).push(p);});
+  const modes=Object.keys(byMode);
+  const interleaved=[];
+  let added=true, r=0;
+  while(interleaved.length<shuffled.length){
+    added=false;
+    for(const mk of modes){ if(byMode[mk][r]){interleaved.push(byMode[mk][r]);added=true;} }
+    r++;
+    if(!added)break;
+  }
+  return interleaved[pos];
+}
+function getTodayPrompts(){
+  const dayMs=86400000;
+  const now=new Date();
+  const local=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const day=Math.floor(local.getTime()/dayMs);
+  const g=pickClass(POOL_GROUNDING,day,13);
+  const o=pickClass(POOL_OUTWARD,day,53);
+  const d=pickClass(POOL_DEEP,day,97);
+  return [
+    {tag:g.mode,text:g.text},
+    {tag:o.mode,text:o.text},
+    {tag:d.mode,text:d.text}
+  ];
+}
+function getStreak(){const dates=entries.map(e=>e.date).sort().reverse();let streak=0,check=new Date();for(let d of dates){if(d===check.toISOString().slice(0,10)){streak++;check.setDate(check.getDate()-1);}else break;}return streak;}
+
+function updateScore(val){
+  val=parseInt(val);
+  document.getElementById('score-num').textContent=val;
+  document.getElementById('score-num').style.color=SCORE_COLORS[val];
+  document.getElementById('score-word').textContent=SCORE_WORDS[val];
+  document.getElementById('score-word').style.color=SCORE_COLORS[val];
+  const pct=(val-1)/9*100;
+  document.getElementById('mood-slider').style.background=`linear-gradient(90deg,${SCORE_COLORS[val]} ${pct}%,var(--warm) ${pct}%)`;
+}
+
+function renderTodayPrompts(){
+  const labels={"Reflection":"Reflection · self-inquiry","Memory":"Memory · looking back","Gratitude":"Gratitude · noticing","Possibility":"Possibility · what's ahead","People":"People · connection","Play":"Play · imagination","Present":"Present · body & senses","Meaning":"Meaning · what matters","Growth Edge":"Growth Edge · stretching","Wonder":"Wonder · awe & the sacred"};
+  let html='';
+  const sabbat=getActiveSabbat();
+  if(sabbat){
+    html+=`<div class="prompt-card" style="border-color:#9a7bb0;background:linear-gradient(180deg,#faf6fc,white)"><div class="prompt-tag" style="color:#9a7bb0">✦ ${sabbat.name} · Wheel of the Year</div><div class="prompt-text">${sabbat.text}</div><div class="prompt-note">✏️ A seasonal reflection for this turning of the wheel</div></div>`;
+  }
+  html+=getTodayPrompts().map(p=>`<div class="prompt-card"><div class="prompt-tag">${labels[p.tag]||p.tag}</div><div class="prompt-text">${p.text}</div><div class="prompt-note">✏️ Write your response in your journal</div></div>`).join('');
+  document.getElementById('prompts-container').innerHTML=html;
+}
+
+function saveEntry(){
+  const words=MOOD_WORDS.filter(m=>selectedWords.has(m.word));
+  const score=selectedWords.size>0?Math.round(words.reduce((s,m)=>s+m.score,0)/words.length):5;
+  const bucket=getBucket(score);
+  const sb=getActiveSabbat();
+  const promptList=getTodayPrompts().map(p=>p.tag+': '+p.text);
+  if(sb)promptList.unshift(sb.name+' (Wheel of the Year): '+sb.text);
+  const entry={date:todayKey(),score,bucket:bucket.label,words:[...selectedWords],prompts:promptList};
+  const idx=entries.findIndex(e=>e.date===todayKey());
+  if(idx>=0)entries[idx]=entry;else entries.push(entry);
+  localStorage.setItem('mp_entries',JSON.stringify(entries));
+  showComplete(entry);
+}
+
+function showComplete(entry){
+  const d=formatDate(entry.date);
+  document.getElementById('complete-day').textContent=d.day;
+  document.getElementById('complete-full').textContent=d.full;
+  const streak=getStreak();
+  const bucket=getBucket(entry.score);
+  document.getElementById('streak-dots').innerHTML=Array.from({length:7},(_,i)=>`<div class="streak-dot ${i<Math.min(streak,7)?'filled':''}"></div>`).join('');
+  document.getElementById('summary-card').innerHTML=`
+    <div class="summary-row">
+      <div class="summary-label">Mood score</div>
+      <div class="summary-score-big" style="color:${bucket.color}">${entry.score}</div>
+    </div>
+    <div class="summary-word" style="color:${bucket.color}">${entry.bucket||bucket.label}</div>
+    <div style="margin-top:.5rem;font-size:.75rem;color:var(--fog);font-style:italic">${(entry.words||[]).join(' · ')}</div>
+    <div class="summary-prompts">${entry.prompts.map(p=>`<div class="summary-prompt-line">${p}</div>`).join('')}</div>`;
+  showPage('page-complete');
+}
+
+function renderHistory(){
+  const sorted=[...entries].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('history-count').textContent=`${sorted.length} ${sorted.length===1?'morning':'mornings'} logged`;
+  const tw=document.getElementById('trend-wrap');
+  if(sorted.length>=2){tw.style.display='block';renderTrend(sorted.slice(0,14).reverse());}else tw.style.display='none';
+  if(sorted.length===0){document.getElementById('history-container').innerHTML='<div class="empty-history">Your mornings will appear here after your first log.</div>';return;}
+  document.getElementById('history-container').innerHTML=sorted.map(e=>{
+    const d=formatDate(e.date);
+    const bucket=getBucket(e.score);
+    return`<div class="history-entry">
+      <div class="history-row">
+        <div class="history-date">${d.full}</div>
+        <div class="history-score-chip" style="color:${bucket.color}">${e.score} · ${e.bucket||bucket.label}</div>
+      </div>
+      ${e.words&&e.words.length?`<div style="font-size:.72rem;color:var(--fog);font-style:italic;margin-bottom:.5rem">${e.words.join(' · ')}</div>`:''}
+      <div class="history-prompts">${e.prompts.map(p=>`<div class="history-prompt">${p}</div>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTrend(data){
+  const svg=document.getElementById('trend-svg');const w=svg.parentElement.clientWidth||300;const h=80,pad=16;
+  const pts=data.map((e,i)=>({x:pad+i*(w-pad*2)/(data.length-1),y:h-pad-(e.score-1)/9*(h-pad*2),score:e.score}));
+  const pathD=pts.map((p,i)=>`${i===0?'M':'L'} ${p.x} ${p.y}`).join(' ');
+  svg.innerHTML=`<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--bark)" stop-opacity="0.15"/><stop offset="100%" stop-color="var(--bark)" stop-opacity="0"/></linearGradient></defs><path d="${pathD} L ${pts[pts.length-1].x} ${h} L ${pts[0].x} ${h} Z" fill="url(#tg)"/><path d="${pathD}" fill="none" stroke="var(--bark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="white" stroke="${getBucket(p.score).color}" stroke-width="2"/>`).join('')}`;
+}
+
+function exportData(){
+  if(entries.length===0){alert('No entries to export yet.');return;}
+  const lines=['Morning Pages Journal Export','Generated: '+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),'',''];
+  const sorted=[...entries].sort((a,b)=>a.date.localeCompare(b.date));
+  sorted.forEach(e=>{
+    const d=formatDate(e.date);const bucket=getBucket(e.score);
+    lines.push('=== '+d.full+' ===');
+    lines.push('Mood Score: '+e.score+' / 10  ('+( e.bucket||bucket.label)+')');
+    if(e.words&&e.words.length)lines.push('Words: '+e.words.join(', '));
+    lines.push('');e.prompts.forEach(p=>lines.push('  '+p));lines.push('');
+  });
+  const blob=new Blob([lines.join('\n')],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='morning-journal-'+new Date().toISOString().slice(0,10)+'.txt';a.click();URL.revokeObjectURL(url);
+}
+
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+function navTo(tab){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if(tab==='today'){document.getElementById('nav-today').classList.add('active');const te=entries.find(e=>e.date===todayKey());if(te)showComplete(te);else showPage('page-today');}
+  else{document.getElementById('nav-history').classList.add('active');renderHistory();showPage('page-history');}
+}
+
+function init(){
+  const d=formatDate(todayKey());
+  document.getElementById('today-day').textContent=d.day;
+  document.getElementById('today-full').textContent=d.full;
+  const streak=getStreak();
+  document.getElementById('streak-label').textContent=streak>1?`${streak} day streak`:'';
+  renderMoodWords();
+  renderTodayPrompts();
+  const te=entries.find(e=>e.date===todayKey());
+  if(te)showComplete(te);
+}
+
+init();
+</script>
+</body>
+</html>
